@@ -1,0 +1,7 @@
+backend_servers:
+  - "127.0.0.1:8001"
+  - "127.0.0.1:8002"
+  - "127.0.0.1:8003"
+listen_port: 8080
+health_check_interval: 10
+timeout: 5
