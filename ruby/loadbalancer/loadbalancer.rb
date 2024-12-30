@@ -98,7 +98,10 @@ class TCPRoundRobinLoadBalancer
   end
 end
 
-config_file = 'config.yaml'
-config = YAML.load_file(config_file)
-load_balancer = TCPRoundRobinLoadBalancer.new(config)
-load_balancer.start
+
+if __FILE__ == $PROGRAM_NAME
+  config_file = 'config.yaml'
+  config = YAML.load_file(config_file)
+  load_balancer = TCPRoundRobinLoadBalancer.new(config)
+  load_balancer.start
+end
