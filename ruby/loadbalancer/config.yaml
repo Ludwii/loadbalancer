@@ -3,5 +3,5 @@ backend_servers:
   - "127.0.0.1:8002"
   - "127.0.0.1:8003"
 listen_port: 8080
-health_check_interval: 10
+health_check_interval: 15
 timeout: 5

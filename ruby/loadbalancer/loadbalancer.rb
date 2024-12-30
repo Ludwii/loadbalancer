@@ -46,7 +46,7 @@ class TCPRoundRobinLoadBalancer
     loop do
       client = server.accept
       Thread.new(client) do |connection|
-        handle_connection(connection)
+        handle_connection_with_failover(connection)
       end
     end
   end
@@ -61,10 +61,13 @@ class TCPRoundRobinLoadBalancer
     end
   end
 
-  def handle_connection(client)
+  def handle_connection_with_failover(client)
+    attempt_count = 0
+
     begin
+      attempt_count += 1
       server = @load_balancer.next_server
-      puts "Redirecting to #{server.address}"
+      puts "Redirecting to #{server.address} (Attempt #{attempt_count})"
 
       backend_server = TCPSocket.new(server.ip, server.port)
 
@@ -72,7 +75,13 @@ class TCPRoundRobinLoadBalancer
       relay(backend_server, client)
     rescue => e
       puts "Error: #{e.message}"
-      client.puts "503 Service Unavailable"
+      if attempt_count < @load_balancer.instance_variable_get(:@servers).size
+        puts "Attempting failover to the next server..."
+        retry
+      else
+        puts "All servers failed. Returning 503 to client."
+        client.puts "503 Service Unavailable"
+      end
     ensure
       client.close rescue nil
       backend_server&.close rescue nil
