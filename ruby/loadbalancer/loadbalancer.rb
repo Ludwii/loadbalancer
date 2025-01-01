@@ -35,26 +35,46 @@ class TCPRoundRobinLoadBalancer
       timeout: config['timeout']
     )
     @health_check_interval = config['health_check_interval']
+    @shutdown = false
+    @health_check_thread = nil
+    @server = nil
   end
 
   def start
     Thread.new { run_health_checks }
 
-    server = TCPServer.new(@listen_port)
+    @server = TCPServer.new(@listen_port)
     puts "Load balancer is listening on port #{@listen_port}..."
 
     loop do
-      client = server.accept
-      Thread.new(client) do |connection|
-        handle_connection_with_failover(connection)
+      break if @shutdown
+
+      begin
+        client = @server.accept
+        Thread.new(client) do |connection|
+          handle_connection_with_failover(connection)
+        end
+      rescue IOError, Errno::EBADF => e
+        break if @shutdown # Allow shutdown to break the loop
+        puts "Error accepting client connection: #{e.message}"
       end
     end
+  ensure
+    stop
+  end
+
+  def stop
+    @shutdown = true
+    @health_check_thread&.kill
+    @server&.close rescue nil # Ensure the server socket is closed to unblock `accept`
+    puts "Load balancer has stopped."
   end
 
   private
 
   def run_health_checks
     loop do
+      break if @shutdown
       sleep @health_check_interval
       puts "Running health checks..."
       @load_balancer.health_check
@@ -71,7 +91,7 @@ class TCPRoundRobinLoadBalancer
 
       backend_server = TCPSocket.new(server.ip, server.port)
 
-      Thread.new { relay(client, backend_server) }
+      relay(client, backend_server)
       relay(backend_server, client)
     rescue => e
       puts "Error: #{e.message}"
@@ -90,10 +110,16 @@ class TCPRoundRobinLoadBalancer
 
   def relay(source, destination)
     loop do
-      data = source.readpartial(1024)
-      destination.write(data)
-    rescue EOFError
-      break
+    break if @shutdown
+      begin
+        data = source.readpartial(1024)
+        destination.write(data)
+      rescue EOFError
+        break
+      rescue IOError, SystemCallError => e
+        puts "Relay error: #{e.message}"
+        break
+      end
     end
   end
 end
