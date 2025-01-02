@@ -12,8 +12,8 @@ def run_server(host, port)
     Thread.new(client) do |connection|
       request_count += 1
 
-      connection.puts "Welcome! You are visitor ##{request_count}; Time: #{Time.now}"
       sleep 1
+      connection.puts "Welcome! You are visitor ##{request_count}; Time: #{Time.now}"
 
       connection.close
     end
