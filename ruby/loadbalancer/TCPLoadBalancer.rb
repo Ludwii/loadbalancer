@@ -86,6 +86,7 @@ class TCPLoadBalancer
       begin
         data = source.gets
         destination.puts(data)
+        break if data.nil?
       rescue IOError, Errno::ECONNRESET
         break
       end
