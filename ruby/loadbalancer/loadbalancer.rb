@@ -3,10 +3,10 @@ require 'timeout'
 require 'yaml'
 require_relative 'server'
 
-class RoundRobinLoadBalancer
+class RoundRobinBalancer
   def initialize(servers, timeout: 5)
-    @servers = servers.map { |s| Server.new(*s.split(':')) }
-    @current_index = -1
+    @servers = servers.map { |server| parse_backend_address(server) }
+    @server_enum = @servers.cycle
     @timeout = timeout
   end
 
@@ -14,23 +14,29 @@ class RoundRobinLoadBalancer
     raise "No healthy servers available" if @servers.none?(&:healthy)
 
     loop do
-      @current_index = (@current_index + 1) % @servers.size
-      server = @servers[@current_index]
+      server = @server_enum.next
       return server if server.healthy
     end
   end
 
   def health_check
-    @servers.each do |server|
-      server.check_health(@timeout)
+    @servers.each do |backend_server|
+      backend_server.check_health(@timeout)
     end
+  end
+
+  private
+
+  def parse_backend_address(server)
+    ip, port = server.split(':')
+    Server.new(ip, port)
   end
 end
 
-class TCPRoundRobinLoadBalancer
+class TCPLoadBalancer
   def initialize(config)
     @listen_port = config['listen_port']
-    @load_balancer = RoundRobinLoadBalancer.new(
+    @load_balancer = RoundRobinBalancer.new(
       config['backend_servers'],
       timeout: config['timeout']
     )
@@ -41,9 +47,9 @@ class TCPRoundRobinLoadBalancer
   end
 
   def start
-    Thread.new { run_health_checks }
+    @health_check_thread = Thread.new { run_health_checks }
 
-    @server = TCPServer.new(@listen_port)
+    @server = TCPServer.new("127.0.0.1", @listen_port)
     puts "Load balancer is listening on port #{@listen_port}..."
 
     loop do
@@ -55,7 +61,7 @@ class TCPRoundRobinLoadBalancer
           handle_connection_with_failover(connection)
         end
       rescue IOError, Errno::EBADF => e
-        break if @shutdown # Allow shutdown to break the loop
+        break if @shutdown
         puts "Error accepting client connection: #{e.message}"
       end
     end
@@ -66,7 +72,7 @@ class TCPRoundRobinLoadBalancer
   def stop
     @shutdown = true
     @health_check_thread&.kill
-    @server&.close rescue nil # Ensure the server socket is closed to unblock `accept`
+    @server&.close rescue nil
     puts "Load balancer has stopped."
   end
 
@@ -83,6 +89,7 @@ class TCPRoundRobinLoadBalancer
 
   def handle_connection_with_failover(client)
     attempt_count = 0
+    backend_server = nil
 
     begin
       attempt_count += 1
@@ -90,9 +97,8 @@ class TCPRoundRobinLoadBalancer
       puts "Redirecting to #{server.address} (Attempt #{attempt_count})"
 
       backend_server = TCPSocket.new(server.ip, server.port)
-
-      relay(client, backend_server)
-      relay(backend_server, client)
+      Thread.new { relay_data(client, backend_server) }
+      Thread.new { relay_data(backend_server, client) }
     rescue => e
       puts "Error: #{e.message}"
       if attempt_count < @load_balancer.instance_variable_get(:@servers).size
@@ -102,32 +108,33 @@ class TCPRoundRobinLoadBalancer
         puts "All servers failed. Returning 503 to client."
         client.puts "503 Service Unavailable"
       end
-    ensure
-      client.close rescue nil
-      backend_server&.close rescue nil
     end
   end
 
-  def relay(source, destination)
+  def relay_data(source, destination)
     loop do
-    break if @shutdown
       begin
-        data = source.readpartial(1024)
-        destination.write(data)
-      rescue EOFError
-        break
-      rescue IOError, SystemCallError => e
-        puts "Relay error: #{e.message}"
+        data = source.gets
+        destination.puts(data)
+      rescue IOError, Errno::ECONNRESET
         break
       end
     end
+  ensure
+    source.close
+    destination.close
   end
 end
 
-
 if __FILE__ == $PROGRAM_NAME
-  config_file = 'config.yaml'
-  config = YAML.load_file(config_file)
-  load_balancer = TCPRoundRobinLoadBalancer.new(config)
-  load_balancer.start
+  begin
+    config_file = 'config.yaml'
+    config = YAML.load_file(config_file)
+    load_balancer = TCPLoadBalancer.new(config)
+    load_balancer.start
+  rescue Errno::ENOENT => e
+    puts "Error: Config file not found. #{e.message}"
+  rescue StandardError => e
+    puts "Error: #{e.message}"
+  end
 end
