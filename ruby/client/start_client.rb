@@ -4,7 +4,7 @@ require_relative 'client'
 STDOUT.sync = true
 
 if __FILE__ == $PROGRAM_NAME
-  if ARGV.size != 1
+  if ARGV.size < 1 || ARGV.size > 2
     puts "error: wrong arguments; useage: ruby #{__FILE__} <host>:<port> <optional:sleep_interval>"
     exit(1)
   end

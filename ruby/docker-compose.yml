@@ -38,11 +38,20 @@ services:
       - ruby-backend-2
       - ruby-backend-3
     
-  ruby-client:
+  ruby-client-1:
     build:
       context: ./client
       dockerfile: Dockerfile
-    container_name: "ruby-client"
+    container_name: "ruby-client-1"
     depends_on:
       - ruby-loadbalancer
-    command: ["ruby", "start_client.rb", "ruby-loadbalancer:8000"]
+    command: ["ruby", "start_client.rb", "ruby-loadbalancer:8000", "0.1"]
+
+  ruby-client-2:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: "ruby-client-2"
+    depends_on:
+      - ruby-loadbalancer
+    command: ["ruby", "start_client.rb", "ruby-loadbalancer:8000", "0.1"]
