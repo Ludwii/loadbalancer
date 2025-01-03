@@ -5,7 +5,12 @@ STDOUT.sync = true
 
 if __FILE__ == $PROGRAM_NAME
   if ARGV.size != 1
-    puts "error: wrong arguments; useage: ruby #{__FILE__} <host:port>"
+    puts "error: wrong arguments; useage: ruby #{__FILE__} <host>:<port> <optional:sleep_interval>"
+    exit(1)
+  end
+
+  if ARGV[1] && ARGV[1].to_f <= 0
+    puts "Invalid sleep interval. Expected a positive number."
     exit(1)
   end
   
@@ -15,6 +20,11 @@ if __FILE__ == $PROGRAM_NAME
     exit(1)
   end
 
-  client = Client.new(host, port.to_i)
-  client.run
+  sleep_interval = ARGV[1] ? ARGV[1].to_f : 0.5
+
+  loop do
+    client = Client.new(host, port.to_i)
+    client.run
+    sleep sleep_interval
+  end
 end
