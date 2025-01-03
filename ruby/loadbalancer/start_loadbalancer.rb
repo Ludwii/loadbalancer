@@ -1,10 +1,10 @@
 require 'socket'
 require 'timeout'
 require 'yaml'
-require_relative 'Server'
-require_relative 'RoundRobinBalancer'
 require_relative 'TCPLoadBalancer'
 
+# Ensure output is immediately flushed to make logging instantly visible in docker logs
+STDOUT.sync = true
 
 def get_config()
   if ARGV[0]

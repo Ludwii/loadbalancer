@@ -1,8 +1,7 @@
 require 'socket'
 require 'timeout'
 require 'yaml'
-require_relative 'Server'
-require_relative 'RoundRobinBalancer'
+require_relative 'server'
 
 class RoundRobinBalancer
   def initialize(servers, timeout: 5)

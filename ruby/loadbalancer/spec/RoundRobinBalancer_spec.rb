@@ -1,6 +1,5 @@
-require 'rspec'
-require_relative '../RoundRobinBalancer'
-require_relative '../Server'
+require_relative '../roundRobinBalancer'
+require_relative '../server'
 
 describe RoundRobinBalancer do
   let(:servers) { ['127.0.0.1:8080', '127.0.0.1:8081'] }

@@ -1,7 +1,6 @@
-require 'rspec'
 require 'timeout'
 require 'socket'
-require_relative '../Server'
+require_relative '../server'
 
 RSpec.describe Server do
   before(:each) do
