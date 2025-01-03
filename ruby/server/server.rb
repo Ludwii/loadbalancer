@@ -1,33 +1,32 @@
 require 'socket'
 
-def run_server(host, port)
-  server = TCPServer.new(host, port)
+class Server
+  def initialize(host, port)
+    @host = host
+    @port = port
+  end
 
-  request_count = 0
-  puts "Server running on #{host}:#{port}"
-
-  loop do
-    client = server.accept
-
-    Thread.new(client) do |connection|
-      request_count += 1
-
-      sleep 1
-      connection.puts "Welcome! You are visitor ##{request_count}; Time: #{Time.now}"
-
-      connection.close
+  def start
+    server = TCPServer.new(@host, @port)
+    puts "Server running on #{@host}:#{@port}"
+    
+    loop do
+      client = server.accept
+      Thread.new(client) do |connection|
+        handle_request(connection)
+      end
     end
   end
-end
 
-if __FILE__ == $PROGRAM_NAME
-  if ARGV.length != 1 || !ARGV[0].include?(':')
-    puts "Usage: ruby #{__FILE__} <host:port>"
-    exit 1
+  private
+
+  def handle_request(connection)
+    # Sleep to simulate some work
+    sleep 1
+
+    connection.puts "Welcome! You visited #{@host}:#{@port}. " \
+                    "I did some work and returned this line to you. " \
+                    "Time: #{Time.now}"
+    connection.close
   end
-
-  host, port = ARGV[0].split(':')
-  port = port.to_i
-
-  run_server(host, port)
 end
