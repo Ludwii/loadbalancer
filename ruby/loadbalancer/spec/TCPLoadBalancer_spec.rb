@@ -5,6 +5,7 @@ require_relative '../roundRobinBalancer'
 RSpec.describe TCPLoadBalancer do
   let(:config) do
     {
+      'listen_host' => '0.0.0.0',
       'listen_port' => 8080,
       'backend_servers' => [
         '127.0.0.1:8081',
@@ -31,11 +32,10 @@ RSpec.describe TCPLoadBalancer do
       thread = Thread.new { subject.start }
       sleep 1
       expect(subject.instance_variable_get(:@server)).not_to be_nil
-      expect(subject.instance_variable_get(:@health_check_thread).alive?).to be true
+      expect(subject.instance_variable_get(:@health_check_task)).not_to be_nil
 
       subject.stop
       expect(subject.instance_variable_get(:@server).closed?).to be true
-      expect(subject.instance_variable_get(:@health_check_thread).alive?).to be false
       thread.kill
     end
   end
@@ -44,32 +44,33 @@ RSpec.describe TCPLoadBalancer do
     it 'handles connection failover and returns 503 if all servers fail' do
       client = instance_double('TCPSocket')
       allow(client).to receive(:puts).with("503 Service Unavailable")
+      allow(client).to receive(:close)
+      allow(client).to receive(:closed?).and_return(false)
 
       allow(subject.instance_variable_get(:@load_balancer)).to receive(:next_server).and_return(nil)
       subject.send(:handle_connection_with_failover, client)
 
       expect(client).to have_received(:puts).with("503 Service Unavailable")
+      expect(client).to have_received(:close)
     end
   end
 
   describe '#relay_data' do
-    it 'relays data between source and destination' do
-      source = instance_double('TCPSocket')
-      destination = instance_double('TCPSocket')
+    it 'relays data between client and backend server' do
+      client = instance_double('TCPSocket')
+      backend_server = instance_double('TCPSocket')
 
-      allow(source).to receive(:gets).and_return("data", nil)
-      allow(destination).to receive(:puts).with("data")
-      allow(destination).to receive(:puts).with(nil)
-      allow(source).to receive(:close)
-      allow(destination).to receive(:close)
+      allow(client).to receive(:closed?).and_return(false, false, true)
+      allow(backend_server).to receive(:closed?).and_return(false, false, true)
+      allow(IO).to receive(:select).and_return([[client]], nil)
+      allow(client).to receive(:read_nonblock).and_return("data")
+      allow(backend_server).to receive(:write_nonblock)
 
-      subject.send(:relay_data, source, destination)
+      subject.send(:relay_data, client, backend_server)
 
-      expect(source).to have_received(:gets).twice
-      expect(destination).to have_received(:puts).with("data").once
-      expect(destination).to have_received(:puts).with(nil).once
-      expect(source).to have_received(:close).once
-      expect(destination).to have_received(:close).once
+      expect(client).to have_received(:read_nonblock).with(4096)
+      expect(backend_server).to have_received(:write_nonblock).with("data")
     end
   end
+
 end

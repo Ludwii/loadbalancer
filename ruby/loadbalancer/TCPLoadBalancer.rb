@@ -1,10 +1,12 @@
 require 'socket'
 require 'timeout'
 require 'yaml'
+require 'async'
 require_relative 'roundRobinBalancer'
 
 class TCPLoadBalancer
   def initialize(config)
+    @listen_host = config['listen_host']
     @listen_port = config['listen_port']
     @load_balancer = RoundRobinBalancer.new(
       config['backend_servers'],
@@ -17,22 +19,24 @@ class TCPLoadBalancer
   end
 
   def start
-    @health_check_thread = Thread.new { run_health_checks }
+    Async do |task|
+      @health_check_task = task.async { run_health_checks }
 
-    @server = TCPServer.new("127.0.0.1", @listen_port)
-    puts "Load balancer is listening on port #{@listen_port}..."
+      @server = TCPServer.new(@listen_host, @listen_port)
+      puts "Load balancer is listening on port #{@listen_port}..."
 
-    loop do
-      break if @shutdown
+      task.async do
+        loop do
+          break if @shutdown
 
-      begin
-        client = @server.accept
-        Thread.new(client) do |connection|
-          handle_connection_with_failover(connection)
+          begin
+            client = @server.accept
+            task.async { handle_connection_with_failover(client) }
+          rescue IOError, Errno::EBADF => e
+            break if @shutdown
+            puts "Error accepting client connection: #{e.message}"
+          end
         end
-      rescue IOError, Errno::EBADF => e
-        break if @shutdown
-        puts "Error accepting client connection: #{e.message}"
       end
     end
   ensure
@@ -67,8 +71,7 @@ class TCPLoadBalancer
       puts "Redirecting to #{server.address} (Attempt #{attempt_count})"
 
       backend_server = TCPSocket.new(server.ip, server.port)
-      Thread.new { relay_data(client, backend_server) }
-      Thread.new { relay_data(backend_server, client) }
+      relay_data(client, backend_server)
     rescue => e
       puts "Error: #{e.message}"
       if attempt_count < @load_balancer.instance_variable_get(:@servers).size
@@ -78,21 +81,33 @@ class TCPLoadBalancer
         puts "All servers failed. Returning 503 to client."
         client.puts "503 Service Unavailable"
       end
+    ensure
+      client.close if client && !client.closed?
+      backend_server&.close if backend_server && !backend_server.closed?
     end
   end
 
-  def relay_data(source, destination)
+  def relay_data(client, backend_server)
+    sockets = [client, backend_server]
     loop do
-      begin
-        data = source.gets
-        destination.puts(data)
-        break if data.nil?
-      rescue IOError, Errno::ECONNRESET
-        break
+      break if sockets.any?(&:closed?)
+
+      ready_sockets = IO.select(sockets)
+      break if ready_sockets.nil?
+
+      ready_sockets[0].each do |socket|
+        begin
+          data = socket.read_nonblock(4096)
+          target_socket = (socket == client) ? backend_server : client
+          if target_socket && !target_socket.closed?
+            target_socket.write_nonblock(data)
+          end
+        rescue IO::WaitReadable, IO::WaitWritable
+          next
+        rescue EOFError, IOError, Errno::ECONNRESET, Errno::EPIPE
+          socket.close unless socket.closed?
+        end
       end
     end
-  ensure
-    source.close
-    destination.close
   end
 end

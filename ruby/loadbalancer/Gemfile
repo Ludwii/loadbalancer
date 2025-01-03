@@ -4,6 +4,7 @@ source "https://rubygems.org"
 
 gem "debug", require: false
 gem 'yaml'
+gem 'async'
 gem 'timeout'
 
 group :development, :test do

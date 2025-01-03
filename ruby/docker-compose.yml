@@ -1,0 +1,48 @@
+services:
+  ruby-backend-1:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - 8001:8001
+    container_name: "ruby-backend-1"
+    command: ["ruby", "start_backend_server.rb", "0.0.0.0:8001"]
+
+  ruby-backend-2:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - 8002:8001
+    container_name: "ruby-backend-2"
+    command: ["ruby", "start_backend_server.rb", "0.0.0.0:8001"]
+
+  ruby-backend-3:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - 8003:8001
+    container_name: "ruby-backend-3"
+    command: ["ruby", "start_backend_server.rb", "0.0.0.0:8001"]
+
+  ruby-loadbalancer:
+    build:
+      context: ./loadbalancer
+      dockerfile: Dockerfile
+    ports:
+      - 8000:8000
+    container_name: "ruby-loadbalancer"
+    depends_on:
+      - ruby-backend-1
+      - ruby-backend-2
+      - ruby-backend-3
+    
+  ruby-client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: "ruby-client"
+    depends_on:
+      - ruby-loadbalancer
+    command: ["ruby", "start_client.rb", "ruby-loadbalancer:8000"]
