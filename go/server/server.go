@@ -38,8 +38,6 @@ func (s *Server) Start() {
 }
 
 func (s *Server) handleRequest(conn net.Conn) {
-	defer conn.Close()
-
 	// Sleep to simulate some work
 	time.Sleep(1 * time.Second)
 
@@ -49,6 +47,8 @@ func (s *Server) handleRequest(conn net.Conn) {
 	if err != nil {
 		log.Println("Error writing response:", err)
 	}
+
+	conn.Close()
 }
 
 func main() {

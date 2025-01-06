@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"flag"
+	"io"
 	"log"
 	"net"
 )
@@ -31,6 +32,11 @@ func (c *Client) Run() {
 	for {
 		line, err := reader.ReadString('\n')
 		if err != nil {
+			if err == io.EOF {
+				log.Println("Server closed the connection.")
+				break
+			}
+			log.Printf("Error reading from server: %v\n", err)
 			break
 		}
 		log.Printf("Received: %s\n", line)
