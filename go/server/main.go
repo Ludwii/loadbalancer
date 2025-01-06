@@ -1,12 +1,19 @@
 package main
 
-import "flag"
+import (
+	"flag"
+	"log"
+	"net"
+)
 
 func main() {
-	host := flag.String("host", "127.0.0.1", "IP address to bind the server")
-	port := flag.String("port", "8001", "Port to bind the server")
+	address := flag.String("address", "127.0.0.1:8001", "Server address in the format ip:port")
 	flag.Parse()
+	host, port, err := net.SplitHostPort(*address)
+	if err != nil {
+		log.Fatalf("Invalid address format: %v\n", err)
+	}
 
-	server := NewServer(*host, *port)
+	server := NewServer(host, port)
 	server.Start()
 }

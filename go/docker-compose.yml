@@ -1,0 +1,59 @@
+name: go-loadbalancer-test
+
+services:
+  go-backend-1:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - 8005:8001
+    container_name: "go-backend-1"
+    command: ["./go-backend", "-address", "0.0.0.0:8001"]
+
+  go-backend-2:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - 8006:8001
+    container_name: "go-backend-2"
+    command: ["./go-backend", "-address", "0.0.0.0:8001"]
+
+  go-backend-3:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - 8007:8001
+    container_name: "go-backend-3"
+    command: ["./go-backend", "-address", "0.0.0.0:8001"]
+
+  go-loadbalancer:
+    build:
+      context: ./loadbalancer
+      dockerfile: Dockerfile
+    ports:
+      - 8004:8000
+    container_name: "go-loadbalancer"
+    depends_on:
+      - go-backend-1
+      - go-backend-2
+      - go-backend-3
+    
+  go-client-1:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: "go-client-1"
+    depends_on:
+      - go-loadbalancer
+    command: ["./go-client", "-address", "go-loadbalancer:8000", "-sleep_interval", "500"]
+
+  go-client-2:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: "go-client-2"
+    depends_on:
+      - go-loadbalancer
+    command: ["./go-client", "-address", "go-loadbalancer:8000", "-sleep_interval", "500"]
