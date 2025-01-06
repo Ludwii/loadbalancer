@@ -5,8 +5,11 @@ import (
 	"io"
 	"log"
 	"net"
+	"os"
 	"sync"
 	"time"
+
+	"gopkg.in/yaml.v2"
 )
 
 type TCPLoadBalancer struct {
@@ -19,15 +22,14 @@ type TCPLoadBalancer struct {
 	server               net.Listener
 }
 
-func NewTCPLoadBalancer(config map[string]interface{}) *TCPLoadBalancer {
-	servers := config["backend_servers"].([]string)
-	timeout := time.Duration(config["timeout"].(int)) * time.Second
-	healthCheckInterval := time.Duration(config["health_check_interval"].(int)) * time.Second
+func NewTCPLoadBalancer(config Config) *TCPLoadBalancer {
+	timeout := time.Duration(config.Timeout) * time.Second
+	healthCheckInterval := time.Duration(config.HealthCheckInterval) * time.Second
 
 	return &TCPLoadBalancer{
-		listenHost:          config["listen_host"].(string),
-		listenPort:          config["listen_port"].(string),
-		loadBalancer:        NewRoundRobinBalancer(servers, timeout),
+		listenHost:          config.ListenHost,
+		listenPort:          config.ListenPort,
+		loadBalancer:        NewRoundRobinBalancer(config.BackendServers, timeout),
 		healthCheckInterval: healthCheckInterval,
 	}
 }
@@ -153,13 +155,31 @@ func waitForCompletion(ctx context.Context, wg *sync.WaitGroup) {
 	}
 }
 
+type Config struct {
+	ListenHost          string   `yaml:"listen_host"`
+	ListenPort          string   `yaml:"listen_port"`
+	BackendServers      []string `yaml:"backend_servers"`
+	Timeout             int      `yaml:"timeout"`
+	HealthCheckInterval int      `yaml:"health_check_interval"`
+}
+
+func loadConfig(filename string) (Config, error) {
+	var config Config
+	file, err := os.Open(filename)
+	if err != nil {
+		return config, err
+	}
+	defer file.Close()
+
+	decoder := yaml.NewDecoder(file)
+	err = decoder.Decode(&config)
+	return config, err
+}
+
 func main() {
-	config := map[string]interface{}{
-		"listen_host":           "127.0.0.1",
-		"listen_port":           "8000",
-		"backend_servers":       []string{"127.0.0.1:8001", "127.0.0.1:8002"},
-		"timeout":               5,
-		"health_check_interval": 10,
+	config, err := loadConfig("config_local.yaml")
+	if err != nil {
+		log.Fatalf("Failed to load config: %v", err)
 	}
 
 	lb := NewTCPLoadBalancer(config)

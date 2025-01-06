@@ -7,13 +7,13 @@ import (
 	"time"
 )
 
-func getTestConfig() map[string]interface{} {
-	return map[string]interface{}{
-		"listen_host":           "127.0.0.1",
-		"listen_port":           "8080",
-		"backend_servers":       []string{"127.0.0.1:8081", "127.0.0.1:8082"},
-		"timeout":               5,
-		"health_check_interval": 10,
+func getTestConfig() Config {
+	return Config{
+		ListenHost:          "127.0.0.1",
+		ListenPort:          "8080",
+		BackendServers:      []string{"127.0.0.1:8081", "127.0.0.1:8082"},
+		Timeout:             5,
+		HealthCheckInterval: 10,
 	}
 }
 
