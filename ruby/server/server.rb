@@ -24,9 +24,10 @@ class Server
     # Sleep to simulate some work
     sleep 1
 
-    connection.puts "Welcome! You visited #{@host}:#{@port}. " \
-                    "I did some work and returned this line to you. " \
-                    "Time: #{Time.now}"
+    hostname = Socket.gethostname
+    connection.puts "Welcome! You visited host #{hostname}. " \
+            "I did some work and returned this line to you. " \
+            "Time: #{Time.now}"
     connection.close
   end
 end

@@ -1,0 +1,21 @@
+@startuml
+
+
+node "Load Balancer" {
+    artifact "Config" as lbConfig
+    component "Round Robin Balancer" as RoundRobinBalancer
+    component "TCP Load Balancer" as tcpLoadBalancer
+    collections "Server List" as ServerCollection
+    component "Server" as Server
+    interface "TCP Socket" as tcpSocket2
+}
+
+tcpLoadBalancer -- lbConfig
+tcpLoadBalancer -- RoundRobinBalancer
+tcpLoadBalancer -- tcpSocket2
+RoundRobinBalancer -- ServerCollection
+Server -- ServerCollection
+@enduml
+
+
+

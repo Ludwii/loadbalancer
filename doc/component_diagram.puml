@@ -1,0 +1,44 @@
+@startuml
+
+
+node "Backend Server" {
+    interface "TCP Socket" as tcpSocket
+    component "Server" as backendService
+}
+
+node "Load Balancer" {
+    together {
+        component "TCP Load Balancer" as tcpLoadBalancer
+        interface "TCP Socket" as tcpSocket2
+        artifact "Config" as lbConfig
+    }
+
+    together {
+        component "Round Robin\nBalancer" as RoundRobinBalancer
+    }
+
+    together {
+        collections "Server List" as ServerCollection
+        component "Server" as Server
+    }
+}
+
+node "Client" {
+    component "Client" as clientApp
+}
+
+
+tcpLoadBalancer -- tcpSocket2
+backendService -- tcpSocket
+Server --( tcpSocket : \nhealth\ncheck
+Server -- ServerCollection
+clientApp --( tcpSocket2 :   \nrelay\ndata
+tcpLoadBalancer -- lbConfig
+tcpLoadBalancer -- RoundRobinBalancer
+tcpLoadBalancer --( tcpSocket : relay    \n data     \n\n\n\n\n\n  
+RoundRobinBalancer -- ServerCollection
+
+@enduml
+
+
+

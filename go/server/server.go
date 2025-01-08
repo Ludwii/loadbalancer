@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"os"
 	"time"
 )
 
@@ -24,7 +25,6 @@ func (s *Server) Start() {
 	}
 	defer listener.Close()
 	log.Printf("Server running on %s:%s\n", s.host, s.port)
-	fmt.Printf("Server running on %s:%s\n", s.host, s.port)
 
 	for {
 		conn, err := listener.Accept()
@@ -40,9 +40,14 @@ func (s *Server) handleRequest(conn net.Conn) {
 	// Sleep to simulate some work
 	time.Sleep(1 * time.Second)
 
-	response := fmt.Sprintf("Welcome! You visited %s:%s. I did some work and returned this line to you. Time: %s\n",
-		s.host, s.port, time.Now().Format(time.RFC1123))
-	_, err := conn.Write([]byte(response))
+	hostname, err := os.Hostname()
+	if err != nil {
+		log.Println("Error getting hostname:", err)
+		hostname = "unknown"
+	}
+	response := fmt.Sprintf("Welcome! You visited host %s. I did some work and returned this line to you. Time: %s\n",
+		hostname, time.Now().Format(time.RFC1123))
+	_, err = conn.Write([]byte(response))
 	if err != nil {
 		log.Println("Error writing response:", err)
 	}

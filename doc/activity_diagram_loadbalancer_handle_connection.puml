@@ -1,0 +1,27 @@
+@startuml
+
+partition "load balancer - handle client connection with failover" {
+
+start
+
+:attemptCount = 0;
+
+repeat
+    :attemptCount++;
+    :Select the next backend server\n trough round robin algorithm;
+    if (Is an error thrown? || attemptCount exceeds the number of healthy servers?) then (yes)
+        :log error;
+        :return that the service is unavailable;
+        stop
+    endif
+
+    :Establish connection to the selected backend server;
+repeat while (Is an error thrown?) is (yes) not (no)
+
+:relay data between client and backend server;
+
+stop
+
+}
+
+@enduml

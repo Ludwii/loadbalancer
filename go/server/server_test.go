@@ -39,7 +39,7 @@ func TestServer_Start_And_Handle_Request(t *testing.T) {
 	}
 
 	response := string(buffer[:n])
-	expected := "Welcome! You visited " + host + ":" + port
+	expected := "Welcome! You visited host"
 	if response[:len(expected)] != expected {
 		t.Errorf("Expected response to start with %s, got %s", expected, response)
 	}

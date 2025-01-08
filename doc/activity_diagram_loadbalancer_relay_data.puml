@@ -1,0 +1,22 @@
+@startuml
+
+partition "loadbalancer - relay data between client and backend server" {
+
+    start
+
+    :Initialize wait group;
+
+    fork
+        :Copy data from backendServer to client;
+        :Mark wait group as done;
+    fork again
+        :Copy data from client to backendServer;
+        :Mark wait group as done;
+    end fork
+
+    :Wait for completion of wait group;
+
+    stop
+}
+
+@enduml

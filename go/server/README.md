@@ -1,4 +1,23 @@
-# Startup
+# Golang Backend Server
+
+A server application that exposes to a TCP socket and simulates work when being called written in Golang.
+
+## Requirements
+
+To run this application, you need to have Golang and Docker installed on your system. You can check whether you have the necessary installations by executing these statements:
+```sh
+## Verify your Docker installation
+docker --version
+## Verify your Golang installation
+go version
+```
+
+You can install the requirements by executing the following commands (on Ubuntu OS):
+```sh
+sudo apt install docker-ce
+sudo apt install docker-ce-cli
+sudo apt install golang-go
+```
 
 ## Run with Docker
 
@@ -36,3 +55,9 @@ Run the executable. Additionally, you can fill in the argument `<address>` with 
 ./go-backend -address <address>
 ```
 
+## Execute tests
+
+To execute the tests for this Golang project, you can use the built-in testing tool provided by Golang. Run the following command to execute all tests in this directory:
+```sh
+go test
+```

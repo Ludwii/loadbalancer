@@ -32,13 +32,12 @@ func (c *Client) Run() {
 		line, err := reader.ReadString('\n')
 		if err != nil {
 			if err == io.EOF {
-				log.Println("Server closed the connection.")
 				break
 			}
 			log.Printf("Error reading from server: %v\n", err)
 			break
 		}
-		log.Printf("Received: %s\n", line)
+		log.Printf("Received: %s", line)
 	}
 
 	log.Println("Connection closed.")

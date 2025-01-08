@@ -1,4 +1,23 @@
-# Startup
+# Ruby Backend Server
+
+A server application that exposes to a TCP socket and simulates work when being called written in Ruby.
+
+## Requirements
+
+To run this application, you need to have Ruby and Docker installed on your system. You can check whether you have the necessary installations by executing these statements:
+```sh
+## Verify your Docker installation
+docker --version
+## Verify your Ruby installation
+ruby -v
+```
+
+You can install the requirements by executing the following commands (on Ubuntu OS):
+```sh
+sudo apt install docker-ce
+sudo apt install docker-ce-cli
+sudo apt install ruby-full
+```
 
 ## Run with Docker
 
@@ -31,7 +50,15 @@ to install needed gems execute this statement inside the folder:
 bundle install
 ```
 
-run the command in this folder; Make sure to fill in the arguments `<host>` and `<port>`:
+This command runs the `start_backend_server.rb` script using Ruby:
 ```sh
 ruby start_backend_server.rb <host>:<port>
+```
+- `<host>:<port>`: Replace `<host>` with the hostname or IP address where the server will run. If not provided, the default value **127.0.0.1:8001** will be used.
+
+## Execute tests
+
+To execute the tests for this Ruby project, you can use the RSpec testing tool. Run the following command to execute all tests in this directory:
+```sh
+rspec .\spec\
 ```
