@@ -4,7 +4,7 @@ A TCP Load Balancer that uses a round robin algorithmus to balance new incoming 
 
 ## Components
 
-this diagramm depicts components of the load balancer:
+this diagram depicts components of the load balancer:
 
 ![Component Diagram](../../doc/component_diagram_loadbalancer_only.png)
 - **Server:** this component defines a backend server struct. It also provides helper functions methods to create a new servers, get its address, and check its health status by attempting a TCP connection within a specified timeout.
