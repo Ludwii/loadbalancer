@@ -1,0 +1,25 @@
+@startuml
+
+partition "loadbalancer - start load balancer" {
+
+start
+
+:expose TCP Socket;
+
+fork
+        repeat
+        :accept TCP connection;
+        :handle client connection with failover;
+    repeat while (Is shutdown flag set?) is (no) not (yes)
+fork again
+    repeat
+        :perform health check on backend servers;
+        :sleep until next health check interval;
+    repeat while (Is shutdown flag set?) is (no) not (yes)
+end fork
+
+stop
+
+}
+
+@enduml

@@ -1,0 +1,22 @@
+@startuml
+
+partition "loadbalancer - initialization" {
+
+start
+
+:parse command line arguments;
+
+:load and apply config file;
+
+:set shutdown flag to false;
+
+:start load balancer;
+
+:stop loadbalancer;
+
+stop
+
+
+}
+
+@enduml

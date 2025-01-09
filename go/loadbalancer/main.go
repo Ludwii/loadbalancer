@@ -16,4 +16,5 @@ func main() {
 
 	lb := NewTCPLoadBalancer(config)
 	lb.Start()
+	lb.Stop()
 }

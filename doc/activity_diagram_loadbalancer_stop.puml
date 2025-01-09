@@ -1,0 +1,21 @@
+@startuml
+
+partition "loadbalancer - stop load balancer" {
+
+start
+
+:set shutdown flag to true;
+
+:check if TCP Socket needs to be closed;
+if (TCP Socket exposed?) then (yes)
+    :close exposed TCP Socket;
+else (no)
+endif
+
+:wait for graceful shutdown;
+
+stop
+
+}
+
+@enduml

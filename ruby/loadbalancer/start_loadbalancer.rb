@@ -25,5 +25,7 @@ if __FILE__ == $PROGRAM_NAME
     puts "Error: Config file not found. #{e.message}"
   rescue StandardError => e
     puts "Error: #{e.message}"
+  ensure
+    load_balancer.stop
   end
 end

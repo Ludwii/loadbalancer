@@ -13,6 +13,7 @@ repeat
         :log error;
         :return that the service is unavailable;
         stop
+    else (no)
     endif
 
     :Establish connection to the selected backend server;

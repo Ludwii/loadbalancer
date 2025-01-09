@@ -64,7 +64,9 @@ func (lb *TCPLoadBalancer) Start() {
 
 func (lb *TCPLoadBalancer) Stop() {
 	lb.shutdown = true
-	lb.server.Close()
+	if lb.server != nil {
+		lb.server.Close()
+	}
 	lb.healthCheckWaitGroup.Wait()
 	log.Println("Load balancer has stopped.")
 }

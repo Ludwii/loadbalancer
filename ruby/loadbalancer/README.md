@@ -16,13 +16,24 @@ this diagram depicts components of the load balancer:
 
 ## Activity diagram concepts
 
-This section provides simplified activity diagrams to assist you in understanding the code flow in the load balancer. The following concepts are illustrated:
+This section provides activity diagrams to assist you in understanding the code flow in the load balancer. Beware, that these activity diagrams are simplified. Error handling, threading and other complexities are often hidden inside action blocks or excluded altogether. 
+
+following concepts are illustrated:
+- **load balancer initialization:** shows how the load balancer is constructed
+- **load balancer start:** depicts how the load balancer starts 
 - **handle client connection with failover:** shows the process by which the load balancer selects a backend server to connect to. It also shows that different backend servers are retried as a failover
 - **relay data between client and backend server** : illustrates how data is passed between client and backend server using waiting groups that make sure the data is completly transmited
-  
-![Handling connections with failover](../../doc/activity_diagram_loadbalancer_handle_connection.png)
+- **load balancer stop:** depicts how the load balancer is gracefully stops
 
-![Relaying data](../../doc/activity_diagram_loadbalancer_relay_data.png)
+![load balancer initialization](../../doc/activity_diagram_loadbalancer_init.png)
+
+![load balancer start](../../doc/activity_diagram_loadbalancer_start.png)
+
+![handle client connection with failover](../../doc/activity_diagram_loadbalancer_handle_connection.png)
+
+![relay data between client and backend server](../../doc/activity_diagram_loadbalancer_relay_data.png)
+
+![load balancer stop](../../doc/activity_diagram_loadbalancer_stop.png)
 
 ## Requirements
 
