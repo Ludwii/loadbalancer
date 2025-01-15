@@ -1,6 +1,6 @@
 require 'socket'
 require_relative '../TCPLoadBalancer'
-require_relative '../roundRobinBalancer'
+require_relative '../RoundRobinBalancer'
 
 RSpec.describe TCPLoadBalancer do
   let(:config) do

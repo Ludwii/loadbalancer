@@ -2,7 +2,7 @@ require 'socket'
 require 'timeout'
 require 'yaml'
 require 'async'
-require_relative 'roundRobinBalancer'
+require_relative 'RoundRobinBalancer'
 
 class TCPLoadBalancer
   def initialize(config)

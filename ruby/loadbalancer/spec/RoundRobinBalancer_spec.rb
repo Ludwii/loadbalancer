@@ -1,4 +1,4 @@
-require_relative '../roundRobinBalancer'
+require_relative '../RoundRobinBalancer'
 require_relative '../server'
 
 describe RoundRobinBalancer do
